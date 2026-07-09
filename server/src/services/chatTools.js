@@ -208,15 +208,18 @@ async function searchGmail(userId, { gmailQuery, maxResults = 10 }) {
 // the model has into this app's data - it cannot run arbitrary SQL, it can
 // only request one of these three named, fixed-shape operations.
 const TOOL_DEFINITIONS = [
+  // Descriptions are intentionally terse: they are re-sent on every chat request
+  // and count against Groq's token budget. The system prompt carries the shared
+  // stage vocabulary, so each tool only needs its own one-line purpose.
   {
     type: 'function',
     function: {
       name: 'searchTasksByCompany',
-      description: "Search the user's tasks for ones mentioning a given company or keyword in the title or description.",
+      description: "Find the user's tasks matching a company/keyword in the title or description.",
       parameters: {
         type: 'object',
         properties: {
-          companyName: { type: 'string', description: 'Company name or keyword to search for, e.g. "GPMorgan"' },
+          companyName: { type: 'string', description: 'Company name or keyword, e.g. "GPMorgan"' },
         },
         required: ['companyName'],
       },
@@ -226,11 +229,11 @@ const TOOL_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'getOverdueOrUpcomingTasks',
-      description: "Get the user's tasks that are overdue or due within the next N days. Use this for questions about deadlines, what's due soon, or what's overdue.",
+      description: "The user's tasks overdue or due within N days (deadlines / what's due soon / overdue).",
       parameters: {
         type: 'object',
         properties: {
-          withinDays: { type: 'number', description: 'How many days ahead to look, default 7' },
+          withinDays: { type: 'number', description: 'Days ahead to look, default 7' },
         },
       },
     },
@@ -239,7 +242,7 @@ const TOOL_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'getTaskCountsByStatus',
-      description: "Get a count of the user's tasks grouped by status (todo, in_progress, done). Use this for summary/overview questions.",
+      description: 'Count the user\'s tasks by status (todo, in_progress, done). For task overviews.',
       parameters: { type: 'object', properties: {} },
     },
   },
@@ -247,11 +250,11 @@ const TOOL_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'searchJobsByCompany',
-      description: "Search the user's job applications for ones at a given company. Use this for questions about a specific company's application status, e.g. 'did I apply to Stripe?'.",
+      description: "Find the user's job applications at a given company, e.g. 'did I apply to Stripe?'.",
       parameters: {
         type: 'object',
         properties: {
-          companyName: { type: 'string', description: 'Company name to search for, e.g. "Stripe"' },
+          companyName: { type: 'string', description: 'Company name, e.g. "Stripe"' },
         },
         required: ['companyName'],
       },
@@ -261,11 +264,11 @@ const TOOL_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'getJobsNeedingFollowUp',
-      description: "Get the user's job applications whose follow-up date is due within N days and that aren't already closed (offer/rejected/withdrawn). Use this for 'which companies do I need to follow up with' questions.",
+      description: "Open applications whose follow-up is due within N days. For 'who do I need to follow up with'.",
       parameters: {
         type: 'object',
         properties: {
-          withinDays: { type: 'number', description: 'How many days ahead to look, default 7' },
+          withinDays: { type: 'number', description: 'Days ahead to look, default 7' },
         },
       },
     },
@@ -274,7 +277,7 @@ const TOOL_DEFINITIONS = [
     type: 'function',
     function: {
       name: 'getJobCountsByStatus',
-      description: "Get a count of the user's job applications grouped by pipeline stage (wishlist, applied, oa, interviewing, offer, rejected, withdrawn). Use for job-hunt overview questions like 'how many interviews do I have going'.",
+      description: 'Count job applications by pipeline stage. For job-hunt overviews.',
       parameters: { type: 'object', properties: {} },
     },
   },
@@ -283,24 +286,19 @@ const TOOL_DEFINITIONS = [
     function: {
       name: 'queryJobApplications',
       description:
-        "Flexible search over the user's job applications, filtered by pipeline stage and/or date. Use this whenever a question combines a STAGE with a TIME, e.g. 'do I have any online assessments on 10th July?', 'which interviews are coming up this week?', 'what did I apply to in June?'. Pipeline stages and their synonyms: wishlist (saved/interested); applied (applied/submitted); oa (ONLINE ASSESSMENT / OA / coding test / take-home / assessment); interviewing (interview / interview round / phone screen / onsite); offer; rejected; withdrawn. So an 'online assessment' or 'OA' means stage 'oa'; an 'interview' means stage 'interviewing'. Dates filter on next_follow_up by default (the scheduled next-action date on a card); pass dateField 'applied_date' to filter by when they applied. Use onDate for a single day, or fromDate/toDate for an inclusive range. All dates are YYYY-MM-DD.",
+        "Job applications filtered by stage and/or date. Use whenever a question pairs a stage with a time, e.g. 'online assessments on 10th July?' (stage 'oa', onDate) or 'interviews this week?' (stage 'interviewing', date range). Dates filter next_follow_up by default; onDate for one day, fromDate/toDate for a range (YYYY-MM-DD).",
       parameters: {
         type: 'object',
         properties: {
           stage: {
             type: 'string',
             enum: ['wishlist', 'applied', 'oa', 'interviewing', 'offer', 'rejected', 'withdrawn'],
-            description: "Pipeline stage to filter by. 'oa' = online assessment/test; 'interviewing' = interview.",
           },
-          companyName: { type: 'string', description: 'Optional company name to narrow to one company.' },
-          onDate: { type: 'string', description: 'A single calendar day, YYYY-MM-DD.' },
+          companyName: { type: 'string', description: 'Optional: narrow to one company.' },
+          onDate: { type: 'string', description: 'Single day, YYYY-MM-DD.' },
           fromDate: { type: 'string', description: 'Range start (inclusive), YYYY-MM-DD.' },
           toDate: { type: 'string', description: 'Range end (inclusive), YYYY-MM-DD.' },
-          dateField: {
-            type: 'string',
-            enum: ['next_follow_up', 'applied_date'],
-            description: 'Which date column to filter on. Default next_follow_up.',
-          },
+          dateField: { type: 'string', enum: ['next_follow_up', 'applied_date'] },
         },
       },
     },
@@ -310,15 +308,12 @@ const TOOL_DEFINITIONS = [
     function: {
       name: 'searchGmail',
       description:
-        "Search the user's connected Gmail inbox using Gmail's own search operators, and return matching messages' sender, recipient, subject, date, and a short snippet. Use this for questions about the user's actual emails, e.g. 'which companies did I email yesterday' or 'did I get a reply from Stripe'. Construct the gmailQuery using real Gmail search syntax: from:, to:, subject:, after:YYYY/MM/DD, before:YYYY/MM/DD, newer_than:2d, is:sent, etc. If the user isn't connected to Gmail, the tool will say so.",
+        "Search the user's connected Gmail (read-only) and return sender/recipient/subject/date/snippet. Build gmailQuery with real Gmail operators (from:, to:, subject:, after:YYYY/MM/DD, newer_than:2d, is:sent). If not connected, the tool says so.",
       parameters: {
         type: 'object',
         properties: {
-          gmailQuery: {
-            type: 'string',
-            description: 'A Gmail search query using Gmail operators, e.g. "is:sent to:stripe.com newer_than:2d"',
-          },
-          maxResults: { type: 'number', description: 'Max messages to return, 1-20, default 10' },
+          gmailQuery: { type: 'string', description: 'Gmail query, e.g. "is:sent to:stripe.com newer_than:2d"' },
+          maxResults: { type: 'number', description: '1-20, default 10' },
         },
         required: ['gmailQuery'],
       },

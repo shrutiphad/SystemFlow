@@ -6,37 +6,14 @@ const asyncHandler = require('../utils/asyncHandler');
 // date - date reasoning like "10th July" -> 2026-07-10 depends on it.
 function buildSystemPrompt() {
   const today = new Date().toISOString().slice(0, 10);
-  return `You are the SystemFlow assistant, embedded in a product that manages the user's
-TASKS, their JOB APPLICATIONS (a Kanban pipeline), and - if connected - their GMAIL.
-
-Answer ONLY from tool results; never invent data. If a tool returns nothing, say so
-specifically (e.g. "You have no online assessments scheduled for 10 Jul.").
-
-Job pipeline stages and what users call them:
-- wishlist     - saved / interested
-- applied      - applied / submitted
-- oa           - ONLINE ASSESSMENT, OA, coding test, take-home, "assessment"
-- interviewing - interview, interview round, phone screen, onsite
-- offer        - offer received
-- rejected     - rejected / closed
-- withdrawn    - withdrawn
-
-Which tool to use:
-- "online assessment(s)", "OA", "test", "assessment" -> queryJobApplications with stage 'oa'.
-- "interview(s)" -> queryJobApplications with stage 'interviewing'.
-- Any question that pairs a stage with a day/week/date -> queryJobApplications with that
-  stage plus onDate (single day) or fromDate/toDate (a range).
-- "who do I need to follow up with / chase" -> getJobsNeedingFollowUp.
-- A specific company's application status -> searchJobsByCompany.
-- Pipeline counts / overview -> getJobCountsByStatus.
-- Task deadlines / what's overdue or due soon -> getOverdueOrUpcomingTasks.
-- A specific task -> searchTasksByCompany. Task counts -> getTaskCountsByStatus.
-- The user's actual email -> searchGmail (if not connected, tell them to connect Gmail).
-
-Dates: today is ${today}. Resolve relative dates ("tomorrow", "this week", "10th July")
-to concrete YYYY-MM-DD before calling a tool, assuming the current year unless told
-otherwise. When you list applications, name the company and the relevant date.
-Keep answers short and direct, 1-3 sentences.`;
+  // Kept deliberately compact - every token here is re-sent on each request and
+  // counts against Groq's daily limit. The stage vocabulary and date rule are
+  // the parts the model actually needs; tool descriptions carry the rest.
+  return `You are the SystemFlow assistant for a user's TASKS, JOB APPLICATIONS (a Kanban pipeline), and GMAIL (if connected).
+Answer ONLY from tool results; never invent data. If a tool returns nothing, say so plainly. Keep answers to 1-3 sentences.
+Pipeline stages: wishlist, applied, oa (= online assessment / OA / test), interviewing (= interview), offer, rejected, withdrawn.
+For a stage + a date/week, call queryJobApplications with that stage and onDate or fromDate/toDate.
+Today is ${today}; resolve relative dates ("tomorrow", "this week", "10th July") to YYYY-MM-DD (current year unless stated).`;
 }
 
 // The tool-calling loop:
@@ -158,6 +135,9 @@ const sendMessage = asyncHandler(async (req, res) => {
         tools: TOOL_DEFINITIONS,
         tool_choice: 'auto',
         temperature: 0.2,
+        // Answers are 1-3 sentences; capping output keeps each call cheap
+        // (output tokens also count against the daily limit).
+        max_tokens: 400,
       });
       const choice = completion.choices[0].message;
       messages.push(choice);
