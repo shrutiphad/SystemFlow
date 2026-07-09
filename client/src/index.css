@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { @apply scroll-smooth; }
+
+body {
+  @apply bg-canvas dark:bg-canvas-dark text-ink dark:text-ink-dark font-body antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid theme('colors.accent.DEFAULT');
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
