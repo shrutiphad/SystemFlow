@@ -1,239 +1,267 @@
-# SystemFlow — Task & Job-Hunt Management
+# SystemFlow — AI-Native Task, Job-Hunt & Email Assistant
 
-A full-stack task management app built for the Mayfair Worktops Full Stack Developer take-home assignment. Users register, log in, and manage personal tasks (create/read/update/delete) with filtering, sorting, and a summary dashboard.
+A full-stack productivity platform that unifies **task management**, a **job-application tracker**, and an **AI assistant** that answers natural-language questions across your tasks, job pipeline, and connected Gmail inbox. Built as a cleanly separated React + Express + PostgreSQL application, extended in three additive phases without modifying the tested core.
 
-**AI tool disclosure:** built with Claude (Anthropic) as a pair-programming assistant, per the assignment's explicit allowance for AI tool use. Every design decision below is one I can walk through line by line in a follow-up interview.
+**Live demo:** `<FILL IN: https://your-frontend.vercel.app>`
+**Demo login:** `demo@systemflow.dev` / `<FILL IN: demo password>`
+
+> **AI tool disclosure:** built with Claude (Anthropic) as a pair-programming assistant. Every design decision and line of code is one I can explain in a follow-up interview.
 
 ---
 
-## 1. Tech stack
+## 1. Overview
+
+SystemFlow started as a task manager and grew into an AI-native productivity system. It keeps a **clear separation between frontend and backend** — a React SPA talking to a standalone Express REST API over HTTP — and layers three AI-powered features on top, each built as an additive phase so the original, fully-tested task manager never changed.
+
+The defining idea: a language model sits over your data, but **never gets raw database access.** It calls a fixed set of per-user-scoped tool functions; the backend runs the actual queries; ownership is enforced server-side on every call. The same principle governs the read-only Gmail integration.
+
+| | |
+|---|---|
+| **Frontend (Vercel)** | `<FILL IN: https://your-frontend.vercel.app>` |
+| **Backend API (Render)** | `<FILL IN: https://your-backend.onrender.com>` |
+| **Database** | PostgreSQL (Render managed Postgres) |
+| **LLM** | Groq — `llama-3.3-70b-versatile` (tool-calling) |
+
+---
+
+## 2. Tech stack
 
 | Layer | Choice | Why |
 |---|---|---|
-| Frontend | React 18 + Vite | Fast dev server, no framework magic hiding the client/server boundary the brief asks for |
-| Frontend state | React Context (auth, theme) + Zustand (tasks) | Context for cross-cutting concerns that rarely change; Zustand for the task list, which updates on every filter/sort/CRUD action and would cause noisy re-renders under Context |
-| Styling | Tailwind CSS | Utility-first, fast to build a consistent design system with dark mode support |
-| Forms/validation | React Hook Form + Zod (task form), React Hook Form (auth forms) | Declarative client-side validation matching the backend rules |
-| Backend | Node.js + Express | Explicitly requested in the brief |
-| Database | PostgreSQL + Sequelize | Relational integrity for the user→tasks relationship, real indexes, and enum types for priority/status |
-| Auth | JWT (stateless) + bcrypt | Required by the brief; see ARCHITECTURE.md for the full flow and trade-offs |
-
-This is a **separate frontend/backend MERN-style app** (`/client` + `/server`), not a Next.js fullstack app — deliberately, because the brief calls out "a clear separation between frontend and backend" and grades API design as its own 15-point category.
+| Frontend | React 18 + Vite | Fast dev/build; explicit client/backend boundary |
+| State | React Context (auth, theme) + Zustand (tasks, jobs, chat, gmail) | Context for rarely-changing global state; Zustand stores for data that updates frequently |
+| Styling | Tailwind CSS | Utility-first design system with dark mode |
+| Forms / validation | React Hook Form + Zod | Client-side validation mirroring server rules |
+| Backend | Node.js + Express | REST API with middleware-based auth, validation, error handling |
+| Database | PostgreSQL + Sequelize ORM | Relational integrity, indexes, enum types |
+| Auth | JWT (stateless) + bcrypt | Token-based auth; hashed passwords |
+| AI | Groq SDK (tool-calling) | Fast, cheap LLM; the model calls fixed tools, never the DB directly |
+| Email | Google Gmail API (`gmail.readonly`) | Read-only inbox search; OAuth tokens encrypted at rest |
+| Deployment | Vercel (frontend) + Render (backend + Postgres) | Standard split-deployment pattern |
 
 ---
 
-## 2. Project structure
+## 3. Features
+
+### Core — Task management
+- JWT auth: registration with validation, login, protected routes, logout
+- Full task CRUD: title, description, priority (Low/Medium/High), due date, status (To Do / In Progress / Done)
+- Filter by status/priority, sort by due date or creation date
+- Delete with confirmation
+- Dashboard: total tasks, breakdown by status, overdue count (aggregated in the DB)
+- Colour-coded priorities, responsive layout, dark mode
+
+### Phase 1 — AI assistant (chat sidebar)
+- A floating assistant that answers questions about your own tasks and jobs in natural language
+- The LLM never touches the database — it selects from fixed, named **tools** (search by company, get overdue/upcoming, counts by status, follow-ups, etc.); the backend runs the real, per-user-scoped query
+- User identity is injected server-side from the auth token — never exposed to the model, so it cannot request another user's data
+
+### Phase 2 — Job-hunt tracker (Kanban)
+- A pipeline board: Wishlist → Applied → Online Assessment → Interviewing → Offer → Rejected → Withdrawn
+- Drag-and-drop between stages (optimistic UI, rolls back on failure), via a dedicated status endpoint
+- Rich application records: company, role, portal/source, location, salary range, outreach flag, applied/follow-up dates, notes, and a 1–5 excitement rating
+- Job-aware assistant tools (e.g. "which companies need follow-up?", "do I have any offers?")
+
+### Phase 3 — Gmail connector
+- Connect a Gmail account (**read-only** scope) from the sidebar
+- Ask the assistant about your actual inbox — which companies you emailed, whether you've had replies — via a live Gmail search the LLM constructs using Gmail's own operators
+- OAuth tokens are **encrypted at rest** (AES-256-GCM); only metadata + snippets are read, never full bodies stored
+
+---
+
+## 4. Screenshots
+
+| Job-hunt board + AI assistant | Tasks + assistant |
+|---|---|
+| ![Job hunt](docs/screenshot-jobhunt.png) | ![Tasks](docs/screenshot-tasks.png) |
+
+> Save your uploaded screenshots into a `docs/` folder as `screenshot-jobhunt.png` and `screenshot-tasks.png` so these render on GitHub. Consider adding a short demo GIF of the assistant answering a live question — it's the most impressive thing to show.
+
+---
+
+## 5. Project structure
 
 ```
-SystemFlow/
-├── client/                 # React + Vite frontend
+systemflow/
+├── client/                     # React + Vite frontend
 │   └── src/
-│       ├── api/             # axios instance + thin API wrapper functions
-│       ├── context/         # AuthContext, ThemeContext
-│       ├── store/           # Zustand task store
-│       ├── components/      # Navbar, TaskCard, TaskFormModal, etc.
-│       └── pages/            # Login, Register, Dashboard, Tasks
-├── server/                  # Express + PostgreSQL backend
+│       ├── api/                 # axios (JWT interceptors) + auth/task/job/chat/gmail wrappers
+│       ├── context/             # AuthContext, ThemeContext
+│       ├── store/               # taskStore, jobStore, chatStore, gmailStore (Zustand)
+│       ├── components/          # Navbar, TaskCard, JobCard, ChatSidebar, GmailConnect, modals, etc.
+│       └── pages/               # Login, Register, Dashboard, Tasks, JobHunt
+├── server/                      # Express + PostgreSQL backend
 │   ├── src/
-│   │   ├── config/           # Sequelize connection
-│   │   ├── models/           # User, Task
-│   │   ├── middleware/       # auth, validation, error handling
-│   │   ├── controllers/      # auth, task, dashboard
-│   │   └── routes/
-│   ├── seed/                 # demo data seed script
-│   └── tests/                # Jest + Supertest integration tests
-├── docker-compose.yml        # one-command local startup (db + server + client)
+│   │   ├── config/               # Sequelize connection
+│   │   ├── models/               # User, Task, JobApplication, GmailConnection
+│   │   ├── middleware/           # auth, validation, centralized error handling
+│   │   ├── controllers/          # auth, task, dashboard, chat, jobApplication, gmail
+│   │   ├── routes/
+│   │   ├── services/             # groq.client, chatTools, gmail.client
+│   │   └── utils/                # jwt, asyncHandler, crypto (AES-256-GCM)
+│   ├── seed/                     # demo user + sample data
+│   └── tests/                    # Jest + Supertest integration tests
+├── .github/workflows/ci.yml
+├── docker-compose.yml
 └── ARCHITECTURE.md
 ```
 
 ---
 
-## 3. Local setup
+## 6. Local setup
 
 ### Prerequisites
 - Node.js 20+
-- PostgreSQL 14+ running locally (or use Docker — see §6)
+- PostgreSQL 14+ running locally
 
 ### Backend
-
 ```bash
 cd server
-cp .env.example .env      # edit DB_* values if your local Postgres differs
+cp .env.example .env          # fill in DB_*, JWT_SECRET, CLIENT_ORIGIN (see section 7)
 npm install
-npm run seed               # optional: creates a demo user + 8 sample tasks
-npm run dev                 # http://localhost:5000
+npm run seed                   # optional: demo user + sample tasks/jobs
+npm run dev                    # http://localhost:5000
 ```
 
 ### Frontend
-
 ```bash
 cd client
-cp .env.example .env
+cp .env.example .env           # set VITE_API_URL=http://localhost:5000/api
 npm install
-npm run dev                 # http://localhost:5173
+npm run dev                    # http://localhost:5173
 ```
 
-### Demo login
+### One-command startup (Docker)
+```bash
+docker compose up --build
 ```
-email:    demo@systemflow.dev
-password: Demo1234
-```
-(created by `npm run seed` above)
+
+> **Note:** the core app (tasks + jobs) runs with **no AI setup**. The assistant needs `GROQ_API_KEY`; the Gmail connector needs the Google OAuth vars. Without them, the app still runs — the assistant reports "not configured" and Gmail stays disconnected.
 
 ---
 
-## 4. Environment variables
+## 7. Environment variables
 
 **server/.env**
-| Variable | Description |
-|---|---|
-| `PORT` | Port the Express server listens on (default 5000) |
-| `NODE_ENV` | `development` / `production` / `test` |
-| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Discrete Postgres connection params for local dev |
-| `DATABASE_URL` | Optional single connection string; if set, takes priority over the discrete `DB_*` vars (used by most managed Postgres providers) |
-| `JWT_SECRET` | Secret used to sign JWTs — must be a long random string in production |
-| `JWT_EXPIRES_IN` | Token lifetime, e.g. `7d` |
-| `CLIENT_ORIGIN` | Comma-separated list of origins allowed by CORS |
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | no | Server port (default 5000) |
+| `NODE_ENV` | no | `development` / `production` / `test` |
+| `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` | yes | Postgres details (local dev) |
+| `DATABASE_URL` | (prod) | Single connection string; overrides `DB_*` (Render managed Postgres) |
+| `JWT_SECRET` | yes | Secret for signing JWTs |
+| `JWT_EXPIRES_IN` | no | Token lifetime, e.g. `7d` |
+| `CLIENT_ORIGIN` | yes | Comma-separated allowed CORS origins (the Vercel URL in prod) |
+| `GROQ_API_KEY` | for chat | Groq API key (console.groq.com) |
+| `GROQ_CHAT_MODEL` | no | Defaults to `llama-3.3-70b-versatile` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | for Gmail | Google OAuth credentials |
+| `GOOGLE_REDIRECT_URI` | for Gmail | e.g. `http://localhost:5000/api/integrations/gmail/callback` |
+| `TOKEN_ENCRYPTION_KEY` | for Gmail | 64-char hex (32 bytes) for AES-256-GCM token encryption |
 
 **client/.env**
 | Variable | Description |
 |---|---|
-| `VITE_API_URL` | Base URL of the backend API, e.g. `http://localhost:5000/api` |
+| `VITE_API_URL` | Base URL of the backend API |
+
+> Gmail setup (Google Cloud OAuth) is documented step-by-step in `GMAIL_SETUP.md`.
 
 ---
 
-## 5. API reference
+## 8. API reference
 
-All routes are prefixed with `/api`. Protected routes require `Authorization: Bearer <token>`.
+All routes prefixed with `/api`. Protected routes require `Authorization: Bearer <token>`.
 
 ### Auth
-| Method | Route | Auth | Body | Notes |
-|---|---|---|---|---|
-| POST | `/auth/register` | – | `{ name, email, password }` | password ≥ 8 chars, ≥ 1 digit; returns `{ token, user }` |
-| POST | `/auth/login` | – | `{ email, password }` | returns `{ token, user }` |
-| GET | `/auth/me` | ✓ | – | returns the current user; used to re-validate a stored token on app load |
-| POST | `/auth/logout` | ✓ | – | stateless — client discards the token |
+| Method | Route | Auth | Notes |
+|---|---|---|---|
+| POST | `/auth/register` | – | `{ name, email, password }`; returns `{ token, user }` |
+| POST | `/auth/login` | – | `{ email, password }`; returns `{ token, user }` |
+| GET | `/auth/me` | yes | current user (re-validates a stored token) |
+| POST | `/auth/logout` | yes | stateless |
 
 ### Tasks
 | Method | Route | Auth | Notes |
 |---|---|---|---|
-| GET | `/tasks?status=&priority=&sortBy=&order=` | ✓ | `status`: `todo\|in_progress\|done`, `priority`: `low\|medium\|high`, `sortBy`: `due_date\|created_at`, `order`: `asc\|desc` |
-| GET | `/tasks/:id` | ✓ | 404 if the task doesn't belong to the caller |
-| POST | `/tasks` | ✓ | body: `{ title, description?, priority?, status?, due_date? }` |
-| PUT | `/tasks/:id` | ✓ | any subset of the same fields |
-| DELETE | `/tasks/:id` | ✓ | confirmation prompt is handled client-side |
+| GET | `/tasks?status=&priority=&sortBy=&order=` | yes | filter + sort |
+| GET | `/tasks/:id` | yes | 404 if not the caller's |
+| POST | `/tasks` | yes | create |
+| PUT | `/tasks/:id` | yes | update (partial) |
+| DELETE | `/tasks/:id` | yes | delete |
+| GET | `/dashboard/summary` | yes | `{ total, byStatus, overdue }` |
 
-### Dashboard
-| Method | Route | Auth | Returns |
+### Jobs
+| Method | Route | Auth | Notes |
 |---|---|---|---|
-| GET | `/dashboard/summary` | ✓ | `{ total, byStatus: { todo, in_progress, done }, overdue }` |
+| GET | `/jobs?status=` | yes | all applications (board groups client-side) |
+| GET | `/jobs/:id` | yes | single application |
+| POST | `/jobs` | yes | create |
+| PUT | `/jobs/:id` | yes | update |
+| PATCH | `/jobs/:id/status` | yes | lightweight status change (Kanban drag) |
+| DELETE | `/jobs/:id` | yes | delete |
 
-All error responses follow `{ message, errors? }`. Standard status codes: `200/201` success, `400` validation, `401` auth, `404` not found, `409` conflict (duplicate email), `500` unexpected.
+### Assistant (chat)
+| Method | Route | Auth | Notes |
+|---|---|---|---|
+| POST | `/chat` | yes | `{ message, history? }` → `{ reply }`; runs the tool-calling loop |
+
+### Gmail integration
+| Method | Route | Auth | Notes |
+|---|---|---|---|
+| GET | `/integrations/gmail/status` | yes | connection status |
+| GET | `/integrations/gmail/connect` | yes | returns Google consent URL |
+| GET | `/integrations/gmail/callback` | (state) | OAuth callback (authenticated via signed state) |
+| DELETE | `/integrations/gmail` | yes | disconnect |
+
+**Status codes:** `200/201` success, `400` validation, `401` auth, `404` not found, `409` conflict, `503` chat not configured, `500` unexpected.
 
 ---
 
-## 6. Running with Docker
+## 9. Database design
+
+Four tables, all user-scoped with `ON DELETE CASCADE`:
+- **users** — bcrypt-hashed passwords, unique-indexed email
+- **tasks** — UUID PK, ENUM priority/status, `DATE` due date, composite index `(user_id, status, due_date)`
+- **job_applications** — sibling of tasks; ENUM pipeline `status`, free-text `portal`, excitement rating, follow-up dates
+- **gmail_connections** — one per user; **encrypted** OAuth tokens (never plaintext), unique-indexed on `user_id`
+
+Full rationale (schema, auth flow, LLM tool-calling safety, trade-offs) is in `ARCHITECTURE.md`.
+
+---
+
+## 10. Testing
 
 ```bash
-docker compose up --build
+cd server && npm test        # backend: Jest + Supertest vs real PostgreSQL
+cd client && npm test        # frontend: Vitest + Testing Library (rendered, vs live backend)
 ```
-This starts Postgres, the backend (port 5000), and the frontend (port 5173) together. Update `JWT_SECRET` in `docker-compose.yml` before using this anywhere but your own machine.
+Integration tests run against a **real database**, not mocks. They cover auth, task and job CRUD, filtering, dashboard aggregation, and — critically — **ownership isolation** across every entity (proving one user cannot access another's tasks, jobs, or chat results). The frontend tests render the actual app and drive it with real interactions, including the chat tool-calling loop and the Gmail not-connected path.
 
 ---
 
-## 7. Tests
+## 11. CI/CD
 
-**Backend:**
-```bash
-cd server
-npm test
-```
-15 Jest/Supertest integration tests covering registration, login, weak-password rejection, task CRUD, filtering, ownership isolation (user A cannot read/edit/delete user B's tasks), and dashboard aggregation — run against a real PostgreSQL instance, not mocks.
+**GitHub Actions** (`.github/workflows/ci.yml`) on every push and PR:
+- Backend job: PostgreSQL service container + full backend test suite
+- Frontend job: PostgreSQL + live backend + rendered frontend tests, then a production build
 
-**Frontend:**
-```bash
-# with the backend already running on :5000
-cd client
-npm test
-```
-3 Vitest + React Testing Library integration tests that render the actual `<App />` component tree and drive it with real user interactions (typing, clicking, selecting) against the real running backend — register → dashboard, a full task create → edit → filter → delete lifecycle, and a client-side validation rejection path. These are genuine integration tests, not mocked-API unit tests, which is why the backend needs to already be running for `npm test` to pass.
+A red pipeline blocks broken code from merging.
 
 ---
 
-## 8. Screenshots / demo
+## 12. Deployment
 
-Not included in this generated deliverable — run the app locally (§3) and record your own screenshots/GIF of: login, dashboard, task list with filters, and the create/edit modal, then drop them in a `/docs` folder and link them here before submitting.
-
----
-
-## 9. Known trade-offs
-
-See `ARCHITECTURE.md` for the full write-up. Short version: JWT is stored in `localStorage` rather than an httpOnly cookie (simpler CORS story for a 72-hour build; documented as a production hardening item), and `sequelize.sync({ alter: true })` is used instead of versioned migrations (fine for a take-home, would be replaced by `sequelize-cli` migrations in a real rollout).
+- **Frontend → Vercel:** root `client/`, set `VITE_API_URL` to the Render backend URL.
+- **Backend → Render:** Web Service from `server/`, Render managed PostgreSQL, set `DATABASE_URL`, `JWT_SECRET`, `CLIENT_ORIGIN`, and (for AI) `GROQ_API_KEY` + the Google/token vars. `sequelize.sync()` creates the schema on first boot.
+- **Gmail OAuth in production:** add the deployed backend callback URL (`https://<your-backend>/api/integrations/gmail/callback`) to the authorized redirect URIs in Google Cloud.
 
 ---
 
-## 10. AI add-on: task assistant chat sidebar (Phase 1)
+## 13. Security & design decisions
 
-A floating chat widget (bottom-right of every authenticated page) that answers natural-language questions about *your own* tasks — e.g. "Is the GPMorgan QA test done?", "What's overdue?", "How many tasks are in progress?".
+- **LLM never touches the DB** — it calls fixed, per-user-scoped tools; identity is injected server-side, never exposed to the model.
+- **Ownership everywhere** — every query filters by the authenticated user; verified by automated isolation tests.
+- **Gmail is read-only** and OAuth tokens are encrypted at rest (AES-256-GCM, authenticated encryption).
+- **OAuth CSRF protection** via a short-lived signed state token.
+- Documented trade-offs (localStorage JWT vs httpOnly cookies, `sequelize.sync` vs migrations) in `ARCHITECTURE.md`.
 
-**How it works (and why it's safe):** the LLM (Groq, `llama-3.3-70b-versatile`) never touches the database or writes SQL. It's given three fixed, named *tools* (`searchTasksByCompany`, `getOverdueOrUpcomingTasks`, `getTaskCountsByStatus`), each of which is a real parameterised Sequelize query scoped to the authenticated user. The tool-calling loop:
-
-1. `POST /api/chat` (protected by the same `requireAuth` as everything else) sends the question + tool definitions to Groq.
-2. If Groq requests a tool call, the server runs the *real* function — with `userId` injected from `req.user.id`, never from anything the model supplies (the tool schemas don't even expose a `userId` parameter).
-3. The tool result goes back to Groq, which phrases the final answer.
-
-This mirrors how production tools like Shortwave handle "chat with your data" — tool-calling over a fixed, safe surface rather than giving an LLM raw database access. Ownership isolation is enforced exactly as in the REST API: every tool query filters by `user_id`, verified by an automated test that confirms one user's chat cannot surface another user's tasks.
-
-**New env vars:** `GROQ_API_KEY` (required for this feature), `GROQ_CHAT_MODEL` (optional, defaults to `llama-3.3-70b-versatile`). The rest of the app runs fine without them — the chat is purely additive.
-
-**Nothing in the original task CRUD, dashboard, or auth flow was modified** beyond two additive lines in `app.js` (mount the route) and two in the client (mount the widget, reset chat state on auth change).
-
----
-
-## 11. Job-hunt CRM with Kanban board (Phase 2)
-
-A separate `/jobs` page: a Kanban board tracking job applications through a pipeline (Wishlist → Applied → Online Assessment → Interviewing → Offer → Rejected → Withdrawn). Drag a card between columns to change its stage; add/edit/delete applications with company, role, portal, outreach-sent flag, applied/follow-up dates, and notes.
-
-**Data model:** a `job_applications` table that is a deliberate *sibling* of `tasks` — separate table, same ownership pattern (`user_id` from the token, never the body; every query scoped to the owner). Job applications and tasks are different domain objects with different lifecycles, so they aren't forced into one table.
-
-**Design choices worth noting:**
-- `status` is an ENUM (fixed, small, central to the board's structure) while `portal` is free-text STRING (open-ended, changes often) — the inverse trade-off, and a deliberate one.
-- Kanban drag-drop uses native HTML5 drag events, no extra library — keeping the dependency footprint identical to the rest of the app.
-- A dedicated `PATCH /api/jobs/:id/status` endpoint handles drag-drop moves, so a drag only sends the status change, not the whole record. Moves are optimistic in the UI (the card jumps immediately, reconciled with the server, rolled back on failure).
-
-**Chat integration:** the assistant sidebar gained three job-aware tools (`searchJobsByCompany`, `getJobsNeedingFollowUp`, `getJobCountsByStatus`), so you can ask "did I apply to Stripe?" or "which companies do I need to follow up with?" — same safe tool-calling pattern as the task tools, same per-user scoping.
-
-**API surface (all under `/api/jobs`, all requiring auth):** `GET /`, `GET /:id`, `POST /`, `PUT /:id`, `PATCH /:id/status`, `DELETE /:id`.
-
-**Nothing in Phases 0–1 was modified** beyond additive lines: two in `app.js` (import + mount), two in the client (`App.jsx` route, `Navbar.jsx` link), and the chat-tools file gained job tools alongside the existing task tools.
-
-**Tests:** 7 new backend integration tests (job CRUD, PATCH-status, invalid-status rejection, ownership isolation) bringing the backend suite to 22, plus 3 new rendered frontend tests (create-appears-in-column, status-move path, delete) bringing the frontend suite to 8.
-
-## Phase 3 (Gmail RAG connector) — not built
-
-Deliberately deferred. It requires a Google Cloud OAuth app tied to a real Google account, which is a setup step outside this repo. The architecture is designed (read-only `gmail.readonly` scope, encrypted token storage, a `searchGmail` tool where the LLM builds a live Gmail search query at question-time) but not implemented in this deliverable.
-
----
-
-## 12. Gmail RAG connector (Phase 3)
-
-Connect a Gmail account (read-only) and ask the chat assistant about your actual email — e.g. "which companies did I email in the last 2 days?", "did I get a reply from Stripe?". Useful for job-hunt follow-up tracking without manually digging through your inbox.
-
-**Setup:** requires a one-time Google Cloud OAuth app. Full step-by-step in `GMAIL_SETUP.md`. Without it, the rest of the app (tasks, jobs, task/job chat) works normally — the Gmail tool simply reports "not connected."
-
-**How it works:**
-- **Connection** lives in a sidebar control ("Connect Gmail" button / status pill), because OAuth needs a full-page redirect to Google. Clicking it hits `GET /api/integrations/gmail/connect`, which returns a Google consent URL; after consent, Google redirects to `GET /api/integrations/gmail/callback`, which exchanges the code for tokens and stores them.
-- **Querying** lives entirely in the chat assistant, as a fourth tool (`searchGmail`). The LLM constructs a real Gmail search query using Gmail's own operators (`from:`, `to:`, `after:`, `newer_than:`, etc.) and the backend runs it live against the inbox at question-time — no pre-indexing, no local email storage. This mirrors how production tools like Shortwave do "chat with your inbox."
-
-**Security:**
-- Scope is **`gmail.readonly`** only — least privilege; the app can never send/delete/modify mail.
-- OAuth tokens are stored **encrypted at rest** (AES-256-GCM via `crypto.util.js`) in the `gmail_connections` table — never plaintext.
-- The OAuth `state` param is a short-lived **signed JWT** tying the callback to the right user; this is the CSRF defense, and forged/expired state is rejected (redirects to an error, verified by test).
-- The tool returns only sender/recipient/subject/date + snippet — never full bodies.
-- Access tokens auto-refresh transparently and the refreshed token is re-encrypted and persisted.
-
-**New env vars:** `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `TOKEN_ENCRYPTION_KEY` (all documented in `.env.example` and `GMAIL_SETUP.md`).
-
-**What's verified vs. not:** the OAuth endpoint behavior (consent URL generation with correct scope + state, forged-state rejection, status/disconnect), token encryption round-trip + tamper detection, the `gmail_connections` table, and the not-connected chat path are all tested against the real backend. The **live Google consent handshake and real inbox fetch** can only be exercised on your machine after the Google Cloud setup — no automated test can cover those without a real OAuth app and network egress to Google.
-
-**Additive only:** two lines in `app.js` (import + mount), the chat-tools file gained one tool, `Navbar.jsx` gained the connect control, `Dashboard.jsx` gained OAuth-redirect handling, and `AuthContext.jsx` resets the new store on logout. No existing task/job/auth logic changed.
+Built in three additive phases — the core task manager's tests never broke as each AI feature was layered on.
