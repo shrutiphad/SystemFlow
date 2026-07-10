@@ -72,6 +72,12 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+          # This job installs BOTH server and client deps, so cache on both
+          # lock files. Without a path, setup-node looks for a lock file at the
+          # repo root (there isn't one in this monorepo) and fails hard.
+          cache-dependency-path: |
+            server/package-lock.json
+            client/package-lock.json
 
       - name: Install backend deps and start server
         working-directory: server
