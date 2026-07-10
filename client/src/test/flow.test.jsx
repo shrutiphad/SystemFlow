@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
+import { chatEnabled } from './chatEnabled';
 
 // These tests render the REAL App component tree (App -> Router -> Auth/Theme
 // providers -> real pages -> real components) and hit the REAL backend
@@ -113,8 +114,11 @@ describe('Register -> Dashboard -> Tasks full flow', () => {
   }, 20000);
 });
 
+// These exercise the real Groq-backed assistant. They only run when the backend
+// reports chat is configured (GROQ_API_KEY set); in CI without a key they skip
+// rather than fail on a "not configured" response.
 describe('Chat sidebar - real tool-calling loop against real task data', () => {
-  it('answers a question about a real task by calling the real backend tool', async () => {
+  it.skipIf(!chatEnabled)('answers a question about a real task by calling the real backend tool', async () => {
     const user = userEvent.setup();
 
     // Register, then create a real task the question will be about
@@ -154,7 +158,7 @@ describe('Chat sidebar - real tool-calling loop against real task data', () => {
     );
   }, 15000);
 
-  it('does not leak another user\'s task into the chat answer', async () => {
+  it.skipIf(!chatEnabled)('does not leak another user\'s task into the chat answer', async () => {
     const user = userEvent.setup();
 
     // Fresh user, no tasks created - asking about GPMorgan should find nothing,
@@ -173,9 +177,15 @@ describe('Chat sidebar - real tool-calling loop against real task data', () => {
     await user.type(screen.getByPlaceholderText('Ask about tasks, jobs, email…'), 'Is the GPMorgan QA test completed?');
     await user.click(screen.getByRole('button', { name: /^send$/i }));
 
+    // The security property: user B is told nothing was found for "GPMorgan" -
+    // user A's task never surfaces. Tolerant of the model's exact phrasing.
     await waitFor(
       () => {
-        expect(screen.getByText(/no matching (tasks|records) found/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(
+            /no (matching |relevant )?(tasks?|records?|results?)|couldn'?t find|do(?:n'?t| not) have any|nothing (found|matching)|no results|not found/i
+          )
+        ).toBeInTheDocument();
       },
       { timeout: 8000 }
     );

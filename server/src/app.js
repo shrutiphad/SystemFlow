@@ -23,7 +23,15 @@ app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  // `chat` advertises whether the LLM assistant is configured on this instance.
+  // The frontend's live-LLM integration tests use it to skip themselves when no
+  // GROQ_API_KEY is set (e.g. in CI), rather than failing on a "not configured"
+  // response they can't control.
+  res.status(200).json({
+    status: 'ok',
+    chat: Boolean(process.env.GROQ_API_KEY),
+    timestamp: new Date().toISOString(),
+  });
 });
 
 app.use('/api/auth', authRoutes);
