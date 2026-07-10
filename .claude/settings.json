@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(curl -s -m 2 http://localhost:5000/api/health)",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(git add *)"
     ]
   }
 }
