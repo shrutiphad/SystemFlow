@@ -38,7 +38,7 @@ export default function ChatDock() {
         <button
           onClick={() => setCollapsed(false)}
           aria-label="Open assistant"
-          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent text-white hover:opacity-90"
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-gradient text-white shadow-glow hover:opacity-90"
         >
           <MessageCircle size={18} />
         </button>
@@ -47,11 +47,16 @@ export default function ChatDock() {
   }
 
   return (
-    <aside className="flex h-screen w-80 shrink-0 flex-col border-l border-line bg-surface dark:border-line-dark dark:bg-surface-dark">
-      <div className="flex items-center justify-between border-b border-line px-4 py-3 dark:border-line-dark">
-        <div>
-          <h2 className="font-display text-sm font-semibold">Assistant</h2>
-          <p className="text-xs text-ink/50 dark:text-ink-dark/50">Tasks, jobs &amp; email</p>
+    <aside className="flex h-screen w-80 shrink-0 flex-col border-l border-line/80 bg-surface/80 backdrop-blur-xl dark:border-line-dark/80 dark:bg-surface-dark/70">
+      <div className="flex items-center justify-between border-b border-line/80 px-4 py-3 dark:border-line-dark/80">
+        <div className="flex items-center gap-2">
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-gradient text-white shadow-glow">
+            <MessageCircle size={15} />
+          </span>
+          <div>
+            <h2 className="font-display text-sm font-semibold">Assistant</h2>
+            <p className="text-xs text-ink/50 dark:text-ink-dark/50">Tasks, jobs &amp; email</p>
+          </div>
         </div>
         <button
           onClick={() => setCollapsed(true)}
@@ -76,10 +81,10 @@ export default function ChatDock() {
         {messages.map((m, i) => (
           <div
             key={i}
-            className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
+            className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm shadow-sm ${
               m.role === 'user'
-                ? 'ml-auto bg-accent text-white'
-                : 'bg-canvas text-ink dark:bg-canvas-dark dark:text-ink-dark'
+                ? 'ml-auto rounded-br-md bg-accent-gradient text-white shadow-glow'
+                : 'rounded-bl-md bg-surface2 text-ink dark:bg-surface2-dark dark:text-ink-dark'
             }`}
           >
             {m.content}
@@ -104,7 +109,7 @@ export default function ChatDock() {
           type="submit"
           disabled={isSending || !input.trim()}
           aria-label="Send"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-white hover:opacity-90 disabled:opacity-50"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-gradient text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
         >
           <Send size={15} />
         </button>

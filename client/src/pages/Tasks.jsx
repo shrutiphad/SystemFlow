@@ -68,9 +68,9 @@ export default function Tasks() {
       {isLoading ? (
         <p className="text-sm text-ink/50 dark:text-ink-dark/50 font-mono">Loading tasks…</p>
       ) : tasks.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-line dark:border-line-dark p-10 text-center">
+        <div className="rounded-2xl border border-dashed border-line bg-surface2/40 p-10 text-center dark:border-line-dark dark:bg-surface2-dark/30">
           <p className="text-sm text-ink/60 dark:text-ink-dark/60">No tasks match these filters yet.</p>
-          <button onClick={openNewTaskForm} className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+          <button onClick={openNewTaskForm} className="mt-3 rounded-lg bg-accent-gradient px-4 py-2 text-sm font-medium text-white shadow-glow transition-opacity hover:opacity-90">
             Create your first task
           </button>
         </div>

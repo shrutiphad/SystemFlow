@@ -132,8 +132,8 @@ export default function JobFormModal({ open, initialJob, onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-line bg-surface p-5 shadow-xl dark:border-line-dark dark:bg-surface-dark">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="max-h-[90vh] w-full max-w-md animate-pop-in overflow-y-auto rounded-2xl border border-line/80 bg-surface p-5 shadow-elevated dark:border-line-dark/80 dark:bg-surface-dark">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-base font-semibold">{initialJob ? 'Edit application' : 'New application'}</h2>
           <button onClick={onClose} aria-label="Close" className="rounded-md p-1 hover:bg-canvas dark:hover:bg-canvas-dark">
@@ -220,7 +220,7 @@ export default function JobFormModal({ open, initialJob, onClose, onSubmit }) {
 
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={onClose} className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-canvas dark:hover:bg-canvas-dark">Cancel</button>
-            <button type="submit" disabled={isSubmitting} className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
+            <button type="submit" disabled={isSubmitting} className="rounded-lg bg-accent-gradient px-4 py-2 text-sm font-medium text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-50 disabled:shadow-none">
               {initialJob ? 'Save changes' : 'Add application'}
             </button>
           </div>

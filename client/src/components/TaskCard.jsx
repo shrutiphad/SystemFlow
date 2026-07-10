@@ -13,7 +13,7 @@ export default function TaskCard({ task, onEdit, onDelete }) {
   const overdue = task.due_date && task.status !== 'done' && isPast(new Date(task.due_date + 'T23:59:59'));
 
   return (
-    <div className={`flex items-start justify-between gap-4 rounded-lg border border-line dark:border-line-dark border-l-4 ${SPINE[task.priority]} bg-surface dark:bg-surface-dark p-4`}>
+    <div className={`group flex items-start justify-between gap-4 rounded-xl border border-line border-l-4 ${SPINE[task.priority]} bg-surface p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated dark:border-line-dark dark:bg-surface-dark`}>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-display text-sm font-semibold truncate">{task.title}</h3>
@@ -36,12 +36,12 @@ export default function TaskCard({ task, onEdit, onDelete }) {
       {(onEdit || onDelete) && (
         <div className="flex shrink-0 gap-1">
           {onEdit && (
-            <button onClick={() => onEdit(task)} aria-label={`Edit ${task.title}`} className="rounded-md p-2 text-ink/50 hover:bg-canvas hover:text-accent dark:text-ink-dark/50 dark:hover:bg-canvas-dark">
+            <button onClick={() => onEdit(task)} aria-label={`Edit ${task.title}`} className="rounded-md p-2 text-ink/50 hover:bg-surface2 hover:text-accent dark:text-ink-dark/50 dark:hover:bg-surface2-dark">
               <Pencil size={15} />
             </button>
           )}
           {onDelete && (
-            <button onClick={() => onDelete(task)} aria-label={`Delete ${task.title}`} className="rounded-md p-2 text-ink/50 hover:bg-canvas hover:text-priority-high dark:text-ink-dark/50 dark:hover:bg-canvas-dark">
+            <button onClick={() => onDelete(task)} aria-label={`Delete ${task.title}`} className="rounded-md p-2 text-ink/50 hover:bg-surface2 hover:text-priority-high dark:text-ink-dark/50 dark:hover:bg-surface2-dark">
               <Trash2 size={15} />
             </button>
           )}

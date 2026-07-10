@@ -21,10 +21,10 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas px-4 dark:bg-canvas-dark">
-      <div className="w-full max-w-sm rounded-xl border border-line bg-surface p-6 dark:border-line-dark dark:bg-surface-dark">
+      <div className="w-full max-w-sm animate-fade-up rounded-2xl border border-line/80 bg-surface/90 p-6 shadow-elevated backdrop-blur-xl dark:border-line-dark/80 dark:bg-surface-dark/80">
         <div className="mb-6 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent font-display text-sm font-bold text-white">S</span>
-          <span className="font-display text-lg font-semibold">SystemFlow</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-gradient font-display text-sm font-bold text-white shadow-glow">S</span>
+          <span className="gradient-text font-display text-lg font-semibold">SystemFlow</span>
         </div>
         <h1 className="font-display text-xl font-semibold">Welcome back</h1>
         <p className="mt-1 text-sm text-ink/60 dark:text-ink-dark/60">Log in to manage your tasks.</p>
@@ -44,7 +44,7 @@ export default function Login() {
 
           {serverError && <p className="text-xs text-priority-high">{serverError}</p>}
 
-          <button type="submit" disabled={isSubmitting} className="w-full rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50">
+          <button type="submit" disabled={isSubmitting} className="w-full rounded-lg bg-accent-gradient py-2.5 text-sm font-medium text-white shadow-glow transition-opacity hover:opacity-90 disabled:opacity-50 disabled:shadow-none">
             {isSubmitting ? 'Logging in…' : 'Log in'}
           </button>
         </form>

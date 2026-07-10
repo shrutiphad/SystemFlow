@@ -25,7 +25,7 @@ export default function JobCard({ job, onEdit, onDelete, onDragStart, onMove, on
     <div
       draggable
       onDragStart={(e) => onDragStart(e, job.id)}
-      className="group cursor-grab rounded-lg border border-line bg-surface p-3 active:cursor-grabbing dark:border-line-dark dark:bg-surface-dark"
+      className="group cursor-grab rounded-xl border border-line bg-surface p-3 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-elevated active:cursor-grabbing dark:border-line-dark dark:bg-surface-dark"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">

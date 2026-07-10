@@ -70,7 +70,7 @@ export default function JobHunt() {
               {jobs.length} application{jobs.length === 1 ? '' : 's'} in your pipeline.
             </p>
           </div>
-          <button onClick={openNew} className="flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-sm font-medium text-white hover:opacity-90">
+          <button onClick={openNew} className="flex items-center gap-1.5 rounded-lg bg-accent-gradient px-3.5 py-2 text-sm font-medium text-white shadow-glow transition-opacity hover:opacity-90">
             <Plus size={16} /> Add application
           </button>
         </header>
@@ -89,7 +89,7 @@ export default function JobHunt() {
             </p>
             <button
               onClick={openNew}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-accent-gradient px-4 py-2 text-sm font-medium text-white shadow-glow transition-opacity hover:opacity-90"
             >
               <Plus size={16} /> Add your first application
             </button>
@@ -105,10 +105,10 @@ export default function JobHunt() {
                 onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.key); }}
                 onDragLeave={() => setDragOverCol((c) => (c === col.key ? null : c))}
                 onDrop={(e) => onDrop(e, col.key)}
-                className={`flex w-64 shrink-0 flex-col rounded-xl border p-2 transition-colors ${
+                className={`flex w-64 shrink-0 flex-col rounded-2xl border p-2 transition-colors ${
                   dragOverCol === col.key
-                    ? 'border-accent bg-accent-soft/40 dark:bg-accent/10'
-                    : 'border-line bg-canvas dark:border-line-dark dark:bg-canvas-dark'
+                    ? 'border-accent bg-accent-soft/50 shadow-glow dark:bg-accent/10'
+                    : 'border-line bg-surface2/70 dark:border-line-dark dark:bg-surface2-dark/50'
                 }`}
               >
                 <div className="mb-2 flex items-center justify-between px-1">

@@ -5,10 +5,10 @@ import { useTheme } from '../context/ThemeContext';
 import GmailConnect from './GmailConnect';
 
 const linkClass = ({ isActive }) =>
-  `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+  `flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
     isActive
-      ? 'bg-accent-soft text-accent dark:bg-accent/20 dark:text-accent-dark'
-      : 'text-ink/70 hover:bg-canvas dark:text-ink-dark/70 dark:hover:bg-canvas-dark'
+      ? 'bg-accent-soft text-accent shadow-sm ring-1 ring-accent/15 dark:bg-accent/15 dark:text-accent-dark dark:ring-accent/25'
+      : 'text-ink/70 hover:bg-surface2 hover:text-ink dark:text-ink-dark/70 dark:hover:bg-surface2-dark dark:hover:text-ink-dark'
   }`;
 
 export default function Navbar() {
@@ -22,11 +22,11 @@ export default function Navbar() {
   };
 
   return (
-    <aside className="flex h-screen w-56 flex-col justify-between border-r border-line dark:border-line-dark bg-surface dark:bg-surface-dark px-3 py-5">
+    <aside className="flex h-screen w-56 flex-col justify-between border-r border-line/80 bg-surface/80 px-3 py-5 backdrop-blur-xl dark:border-line-dark/80 dark:bg-surface-dark/70">
       <div>
         <div className="mb-8 flex items-center gap-2 px-2">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-accent font-display text-sm font-bold text-white">S</span>
-          <span className="font-display text-base font-semibold">SystemFlow</span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-gradient font-display text-sm font-bold text-white shadow-glow">S</span>
+          <span className="gradient-text font-display text-base font-semibold">SystemFlow</span>
         </div>
         <nav className="flex flex-col gap-1">
           <NavLink to="/dashboard" className={linkClass}>

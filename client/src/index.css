@@ -2,10 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-html { @apply scroll-smooth; }
+html {
+  @apply scroll-smooth;
+}
 
 body {
   @apply bg-canvas dark:bg-canvas-dark text-ink dark:text-ink-dark font-body antialiased;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Luminous mesh backdrop: soft indigo/violet glows drifting behind everything,
+   giving the flat UI real depth without competing with content. Fixed + behind
+   all content, non-interactive. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background:
+    radial-gradient(55rem 55rem at 10% -12%, rgba(62, 90, 224, 0.16), transparent 60%),
+    radial-gradient(48rem 48rem at 112% 8%, rgba(122, 79, 224, 0.14), transparent 55%),
+    radial-gradient(44rem 44rem at 50% 118%, rgba(44, 64, 192, 0.10), transparent 60%);
+  animation: drift 26s ease-in-out infinite;
+}
+
+.dark body::before {
+  background:
+    radial-gradient(55rem 55rem at 10% -12%, rgba(62, 90, 224, 0.24), transparent 60%),
+    radial-gradient(48rem 48rem at 112% 8%, rgba(122, 79, 224, 0.22), transparent 55%),
+    radial-gradient(44rem 44rem at 50% 118%, rgba(44, 64, 192, 0.20), transparent 60%);
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -2.5%, 0) scale(1.04); }
 }
 
 :focus-visible {
@@ -13,7 +44,57 @@ body {
   outline-offset: 2px;
 }
 
+/* Themed, slim scrollbars so they read as part of the design in both modes. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme('colors.line.DEFAULT') transparent;
+}
+.dark * {
+  scrollbar-color: theme('colors.line.dark') transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: theme('colors.line.DEFAULT');
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: theme('colors.line.dark');
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: theme('colors.accent.DEFAULT');
+  background-clip: content-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@layer components {
+  /* Indigo→violet gradient text for brand marks and hero numbers. */
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #3e5ae0 0%, #2c40c0 55%, #7a4fe0 100%);
+  }
+
+  /* Frosted panels. `glass` for the shell (sidebar / chat), `glass-strong`
+     for modals that float over content. */
+  .glass {
+    @apply border border-line/70 bg-surface/70 backdrop-blur-xl dark:border-line-dark/70 dark:bg-surface-dark/65;
+  }
+  .glass-strong {
+    @apply border border-line/80 bg-surface/90 backdrop-blur-2xl dark:border-line-dark/80 dark:bg-surface-dark/85;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  body::before {
+    animation: none;
+  }
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
