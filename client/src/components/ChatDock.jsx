@@ -103,6 +103,15 @@ export default function ChatDock() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask about tasks, jobs, email…"
+          type="text"
+          name="assistant-message"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
+          data-lpignore="true"
+          data-1p-ignore
+          data-form-type="other"
           className="flex-1 rounded-lg border border-line bg-transparent px-3 py-2 text-sm dark:border-line-dark"
         />
         <button

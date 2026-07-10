@@ -96,7 +96,7 @@ export default function JobHunt() {
           </div>
         )}
 
-        <div className="flex gap-3 overflow-x-auto pb-4">
+        <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {COLUMNS.map((col) => {
             const colJobs = jobs.filter((j) => j.status === col.key);
             return (
@@ -105,7 +105,7 @@ export default function JobHunt() {
                 onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.key); }}
                 onDragLeave={() => setDragOverCol((c) => (c === col.key ? null : c))}
                 onDrop={(e) => onDrop(e, col.key)}
-                className={`flex w-64 shrink-0 flex-col rounded-2xl border p-2 transition-colors ${
+                className={`flex min-w-0 flex-col rounded-2xl border p-2 transition-colors ${
                   dragOverCol === col.key
                     ? 'border-accent bg-accent-soft/50 shadow-glow dark:bg-accent/10'
                     : 'border-line bg-surface2/70 dark:border-line-dark dark:bg-surface2-dark/50'
