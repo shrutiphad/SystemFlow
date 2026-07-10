@@ -4,7 +4,9 @@
       "Bash(npm run *)",
       "Bash(curl -s -m 2 http://localhost:5000/api/health)",
       "Bash(break)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "Bash(curl -s \"https://api.github.com/repos/shrutiphad/SystemFlow/actions/runs/29123269399/jobs\")"
     ]
   }
 }
