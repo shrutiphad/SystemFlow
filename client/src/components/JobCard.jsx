@@ -8,7 +8,6 @@ const STATUSES = [
   ['oa', 'Online Assessment'],
   ['interviewing', 'Interviewing'],
   ['offer', 'Offer'],
-  ['rejected', 'Rejected'],
   ['withdrawn', 'Withdrawn'],
 ];
 
@@ -72,26 +71,26 @@ export default function JobCard({ job, onEdit, onDelete, onDragStart, onMove, on
         )}
       </div>
 
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-line/60 pt-2 dark:border-line-dark/60">
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t border-line/60 pt-2 dark:border-line-dark/60">
         <select
           value={job.status}
           onChange={(e) => onMove(job.id, e.target.value)}
           aria-label={`Stage for ${job.company_name}`}
-          className="max-w-[48%] cursor-pointer rounded border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-ink/70 transition-colors hover:border-line hover:bg-canvas focus:border-accent focus:outline-none dark:text-ink-dark/70 dark:hover:border-line-dark dark:hover:bg-canvas-dark"
+          className="min-w-0 flex-1 cursor-pointer truncate rounded border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-ink/70 transition-colors hover:border-line hover:bg-canvas focus:border-accent focus:outline-none dark:text-ink-dark/70 dark:hover:border-line-dark dark:hover:bg-canvas-dark"
         >
           {STATUSES.map(([v, label]) => (
             <option key={v} value={v}>{label}</option>
           ))}
         </select>
 
-        <label className="inline-flex cursor-pointer items-center gap-1 text-[11px] font-mono text-ink/50 dark:text-ink-dark/50">
+        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1 text-[11px] font-mono text-ink/50 dark:text-ink-dark/50">
           <CalendarClock size={11} />
           <input
             type="date"
             value={job.next_follow_up || ''}
             onChange={(e) => onQuickUpdate(job.id, { next_follow_up: e.target.value || null })}
             aria-label={`Follow-up date for ${job.company_name}`}
-            className="w-[92px] bg-transparent text-[11px] outline-none [&::-webkit-calendar-picker-indicator]:opacity-40"
+            className="w-[110px] max-w-full bg-transparent text-[11px] outline-none [&::-webkit-calendar-picker-indicator]:opacity-40"
           />
         </label>
       </div>

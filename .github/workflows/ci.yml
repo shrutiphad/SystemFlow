@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# A new push to the same branch cancels an older still-running run, so a hung
+# job can never block or pile up behind newer commits.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
@@ -84,9 +90,14 @@ jobs:
         run: |
           npm install
           nohup node src/server.js > /tmp/server.log 2>&1 &
-          npx wait-on http://localhost:5000/api/health
+          # -t 120000: fail after 2 min instead of hanging forever if the
+          # server never binds (e.g. a port mismatch), so CI errors fast.
+          npx wait-on -t 120000 http://localhost:5000/api/health || (echo "=== server never became healthy ===" && cat /tmp/server.log && exit 1)
         env:
           NODE_ENV: development
+          # The server defaults to PORT 3000 (local dev); CI's wait-on, tests,
+          # and build all target 5000, so pin it here to keep them aligned.
+          PORT: 5000
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: task_manager

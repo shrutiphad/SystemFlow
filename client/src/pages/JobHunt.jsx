@@ -13,7 +13,6 @@ const COLUMNS = [
   { key: 'oa', label: 'Online Assessment' },
   { key: 'interviewing', label: 'Interviewing' },
   { key: 'offer', label: 'Offer' },
-  { key: 'rejected', label: 'Rejected' },
   { key: 'withdrawn', label: 'Withdrawn' },
 ];
 
@@ -63,14 +62,14 @@ export default function JobHunt() {
 
   return (
     <>
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-semibold">Job hunt</h1>
             <p className="mt-1 text-sm text-ink/60 dark:text-ink-dark/60">
               {jobs.length} application{jobs.length === 1 ? '' : 's'} in your pipeline.
             </p>
           </div>
-          <button onClick={openNew} className="flex items-center gap-1.5 rounded-lg bg-accent-gradient px-3.5 py-2 text-sm font-medium text-white shadow-glow transition-opacity hover:opacity-90">
+          <button onClick={openNew} className="flex shrink-0 items-center gap-1.5 rounded-lg bg-accent-gradient px-4 py-2.5 text-sm font-semibold text-white shadow-glow transition-transform hover:-translate-y-0.5 hover:opacity-95">
             <Plus size={16} /> Add application
           </button>
         </header>
@@ -96,7 +95,7 @@ export default function JobHunt() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-3 pb-4 [grid-template-columns:repeat(auto-fill,minmax(240px,1fr))]">
           {COLUMNS.map((col) => {
             const colJobs = jobs.filter((j) => j.status === col.key);
             return (
