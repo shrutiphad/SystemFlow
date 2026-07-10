@@ -1,28 +1,29 @@
 import { ArrowUpDown, Plus } from 'lucide-react';
+import Select from './Select';
 
 export default function FilterSortBar({ filters, onChange, onNewTask }) {
   return (
     <div className="mb-4 flex flex-wrap items-center gap-2">
-      <select value={filters.status} onChange={(e) => onChange({ status: e.target.value })} className="rounded-lg border border-line dark:border-line-dark bg-transparent px-3 py-2 text-sm" aria-label="Filter by status">
+      <Select value={filters.status} onChange={(e) => onChange({ status: e.target.value })} aria-label="Filter by status">
         <option value="">All statuses</option>
         <option value="todo">To Do</option>
         <option value="in_progress">In Progress</option>
         <option value="done">Done</option>
-      </select>
+      </Select>
 
-      <select value={filters.priority} onChange={(e) => onChange({ priority: e.target.value })} className="rounded-lg border border-line dark:border-line-dark bg-transparent px-3 py-2 text-sm" aria-label="Filter by priority">
+      <Select value={filters.priority} onChange={(e) => onChange({ priority: e.target.value })} aria-label="Filter by priority">
         <option value="">All priorities</option>
         <option value="low">Low</option>
         <option value="medium">Medium</option>
         <option value="high">High</option>
-      </select>
+      </Select>
 
       <div className="flex items-center gap-1">
-        <select value={filters.sortBy} onChange={(e) => onChange({ sortBy: e.target.value })} className="rounded-lg border border-line dark:border-line-dark bg-transparent px-3 py-2 text-sm" aria-label="Sort field">
+        <Select value={filters.sortBy} onChange={(e) => onChange({ sortBy: e.target.value })} aria-label="Sort field">
           <option value="created_at">Sort: Created date</option>
           <option value="due_date">Sort: Due date</option>
-        </select>
-        <button onClick={() => onChange({ order: filters.order === 'asc' ? 'desc' : 'asc' })} className="rounded-lg border border-line dark:border-line-dark p-2 hover:bg-canvas dark:hover:bg-canvas-dark" aria-label="Toggle sort order" title={filters.order === 'asc' ? 'Ascending' : 'Descending'}>
+        </Select>
+        <button onClick={() => onChange({ order: filters.order === 'asc' ? 'desc' : 'asc' })} className="rounded-lg border border-line bg-surface p-2 text-ink/70 transition-colors hover:border-ink/25 hover:text-ink dark:border-line-dark dark:bg-surface-dark dark:text-ink-dark/70 dark:hover:text-ink-dark" aria-label="Toggle sort order" title={filters.order === 'asc' ? 'Ascending' : 'Descending'}>
           <ArrowUpDown size={15} />
         </button>
       </div>

@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Star } from 'lucide-react';
+import Select from './Select';
 
 const STATUSES = [
   ['wishlist', 'Wishlist'],
@@ -178,16 +179,16 @@ export default function JobFormModal({ open, initialJob, onClose, onSubmit }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="job-status" className="mb-1 block text-xs font-medium text-ink/70 dark:text-ink-dark/70">Stage</label>
-              <select id="job-status" {...register('status')} className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm dark:border-line-dark">
+              <Select id="job-status" {...register('status')} fullWidth>
                 {STATUSES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="job-source" className="mb-1 block text-xs font-medium text-ink/70 dark:text-ink-dark/70">Source</label>
-              <select id="job-source" {...register('source')} className="w-full rounded-lg border border-line bg-transparent px-3 py-2 text-sm dark:border-line-dark">
+              <Select id="job-source" {...register('source')} fullWidth>
                 <option value="">—</option>
                 {SOURCES.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-              </select>
+              </Select>
             </div>
           </div>
 

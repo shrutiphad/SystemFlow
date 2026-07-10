@@ -77,7 +77,7 @@ export default function JobCard({ job, onEdit, onDelete, onDragStart, onMove, on
           value={job.status}
           onChange={(e) => onMove(job.id, e.target.value)}
           aria-label={`Stage for ${job.company_name}`}
-          className="max-w-[45%] rounded border border-transparent bg-transparent py-0.5 text-[11px] text-ink/60 hover:border-line dark:text-ink-dark/60 dark:hover:border-line-dark"
+          className="max-w-[48%] cursor-pointer rounded border border-transparent bg-transparent px-1 py-0.5 text-[11px] text-ink/70 transition-colors hover:border-line hover:bg-canvas focus:border-accent focus:outline-none dark:text-ink-dark/70 dark:hover:border-line-dark dark:hover:bg-canvas-dark"
         >
           {STATUSES.map(([v, label]) => (
             <option key={v} value={v}>{label}</option>

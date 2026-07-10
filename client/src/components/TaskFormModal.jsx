@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
+import Select from './Select';
 
 const taskSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(200),
@@ -70,19 +71,19 @@ export default function TaskFormModal({ open, initialTask, onClose, onSubmit }) 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="task-priority" className="mb-1 block text-xs font-medium text-ink/70 dark:text-ink-dark/70">Priority</label>
-              <select {...register('priority')} id="task-priority" className="w-full rounded-lg border border-line dark:border-line-dark bg-transparent px-3 py-2 text-sm">
+              <Select {...register('priority')} id="task-priority" fullWidth>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
-              </select>
+              </Select>
             </div>
             <div>
               <label htmlFor="task-status" className="mb-1 block text-xs font-medium text-ink/70 dark:text-ink-dark/70">Status</label>
-              <select {...register('status')} id="task-status" className="w-full rounded-lg border border-line dark:border-line-dark bg-transparent px-3 py-2 text-sm">
+              <Select {...register('status')} id="task-status" fullWidth>
                 <option value="todo">To Do</option>
                 <option value="in_progress">In Progress</option>
                 <option value="done">Done</option>
-              </select>
+              </Select>
             </div>
           </div>
 
