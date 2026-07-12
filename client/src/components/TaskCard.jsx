@@ -13,7 +13,7 @@ export default function TaskCard({ task, onEdit, onDelete }) {
   const overdue = task.due_date && task.status !== 'done' && isPast(new Date(task.due_date + 'T23:59:59'));
 
   return (
-    <div className={`group flex items-start justify-between gap-4 rounded-xl border border-line border-l-4 ${SPINE[task.priority]} bg-surface p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-elevated dark:border-line-dark dark:bg-surface-dark`}>
+    <div className={`group flex items-start justify-between gap-4 rounded-xl border border-line border-l-4 ${SPINE[task.priority]} bg-surface p-4 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-elevated dark:border-line-dark dark:bg-surface-dark`}>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="font-display text-sm font-semibold truncate">{task.title}</h3>

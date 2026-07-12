@@ -8,12 +8,12 @@ import { useJobStore } from '../store/jobStore';
 // The pipeline stages, in board order. Column colour accents mirror the
 // status meaning (neutral -> in-progress blue -> success green -> closed grey).
 const COLUMNS = [
-  { key: 'wishlist', label: 'Wishlist' },
-  { key: 'applied', label: 'Applied' },
-  { key: 'oa', label: 'Online Assessment' },
-  { key: 'interviewing', label: 'Interviewing' },
-  { key: 'offer', label: 'Offer' },
-  { key: 'withdrawn', label: 'Withdrawn' },
+  { key: 'wishlist', label: 'Wishlist', dot: 'bg-status-todo' },
+  { key: 'applied', label: 'Applied', dot: 'bg-status-progress' },
+  { key: 'oa', label: 'Online Assessment', dot: 'bg-accent2' },
+  { key: 'interviewing', label: 'Interviewing', dot: 'bg-accent' },
+  { key: 'offer', label: 'Offer', dot: 'bg-status-done' },
+  { key: 'withdrawn', label: 'Withdrawn', dot: 'bg-ink/30 dark:bg-ink-dark/30' },
 ];
 
 export default function JobHunt() {
@@ -111,10 +111,11 @@ export default function JobHunt() {
                 }`}
               >
                 <div className="mb-2 flex items-center justify-between px-1">
-                  <span className="font-display text-xs font-semibold uppercase tracking-wide text-ink/60 dark:text-ink-dark/60">
+                  <span className="flex items-center gap-1.5 font-display text-xs font-semibold uppercase tracking-wide text-ink/60 dark:text-ink-dark/60">
+                    <span className={`h-2 w-2 rounded-full ${col.dot}`} aria-hidden="true" />
                     {col.label}
                   </span>
-                  <span className="rounded-full bg-surface px-2 py-0.5 text-[11px] font-mono text-ink/50 dark:bg-surface-dark dark:text-ink-dark/50">
+                  <span className="min-w-[22px] rounded-full bg-surface px-2 py-0.5 text-center text-[11px] font-mono text-ink/60 shadow-sm dark:bg-surface-dark dark:text-ink-dark/60">
                     {colJobs.length}
                   </span>
                 </div>
