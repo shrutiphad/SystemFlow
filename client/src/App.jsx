@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import JobHunt from './pages/JobHunt';
+import Network from './pages/Network';
 import AppLayout from './components/AppLayout';
 
 export default function App() {
@@ -43,6 +44,16 @@ export default function App() {
                 <ProtectedRoute>
                   <AppLayout>
                     <JobHunt />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/network"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Network />
                   </AppLayout>
                 </ProtectedRoute>
               }

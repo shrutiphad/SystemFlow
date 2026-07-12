@@ -8,6 +8,7 @@ const taskRoutes = require('./routes/task.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const chatRoutes = require('./routes/chat.routes');
 const jobRoutes = require('./routes/jobApplication.routes');
+const contactRoutes = require('./routes/contact.routes');
 const gmailRoutes = require('./routes/gmail.routes');
 const { notFound, errorHandler } = require('./middleware/error.middleware');
 
@@ -39,6 +40,7 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/jobs', jobRoutes);
+app.use('/api/contacts', contactRoutes);
 app.use('/api/integrations/gmail', gmailRoutes);
 
 app.use(notFound);
