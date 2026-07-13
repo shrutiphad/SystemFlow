@@ -1,5 +1,5 @@
 const { Op, fn, col } = require('sequelize');
-const { Task, JobApplication } = require('../models');
+const { Task, JobApplication, Contact } = require('../models');
 const gmailService = require('./gmail.client');
 
 // ---------------------------------------------------------------------
@@ -184,6 +184,74 @@ function serializeJob(j) {
   };
 }
 
+// ---- Contact / Network tools ---------------------------------------------
+// The networking CRM. Same scoping guarantee as every tool above: userId is
+// injected by the chat controller, never exposed in any schema.
+
+async function searchContactsByName(userId, { query }) {
+  const contacts = await Contact.findAll({
+    where: {
+      user_id: userId,
+      [Op.or]: [
+        { name: { [Op.iLike]: `%${query}%` } },
+        { company_name: { [Op.iLike]: `%${query}%` } },
+      ],
+    },
+    order: [['created_at', 'DESC']],
+    limit: 20,
+  });
+  return contacts.map(serializeContact);
+}
+
+async function getContactsNeedingFollowUp(userId, { withinDays = 7 } = {}) {
+  const horizon = new Date();
+  horizon.setDate(horizon.getDate() + withinDays);
+  const horizonStr = horizon.toISOString().slice(0, 10);
+
+  const contacts = await Contact.findAll({
+    where: {
+      user_id: userId,
+      status: { [Op.ne]: 'closed' },
+      next_follow_up: { [Op.lte]: horizonStr },
+    },
+    order: [['next_follow_up', 'ASC']],
+    limit: 30,
+  });
+  return contacts.map(serializeContact);
+}
+
+async function getContactCountsByStatus(userId) {
+  const rows = await Contact.findAll({
+    where: { user_id: userId },
+    attributes: ['status', [fn('COUNT', col('status')), 'count']],
+    group: ['status'],
+    raw: true,
+  });
+  const counts = { to_contact: 0, contacted: 0, responded: 0, referred: 0, closed: 0 };
+  rows.forEach((r) => { counts[r.status] = Number(r.count); });
+  return counts;
+}
+
+const CONTACT_STATUS_LABELS = {
+  to_contact: 'To contact', contacted: 'Contacted', responded: 'Responded',
+  referred: 'Referred', closed: 'Closed',
+};
+
+function serializeContact(c) {
+  return {
+    id: c.id,
+    name: c.name,
+    role_title: c.role_title,
+    company_name: c.company_name,
+    email: c.email,
+    relationship: c.relationship,
+    status: c.status,
+    status_label: CONTACT_STATUS_LABELS[c.status] || c.status,
+    next_follow_up: c.next_follow_up,
+    last_contacted: c.last_contacted,
+  };
+}
+
 // ---- Gmail tool (Phase 3) -------------------------------------------------
 // The LLM constructs a real Gmail search query string using Gmail's own
 // operators (from:, to:, subject:, after:, before:, newer_than:, etc.) and
@@ -306,6 +374,41 @@ const TOOL_DEFINITIONS = [
   {
     type: 'function',
     function: {
+      name: 'searchContactsByName',
+      description: "Find people in the user's networking contacts by name or company, e.g. 'who's my contact at Stripe?'.",
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'A person name or company, e.g. "Stripe" or "Priya"' },
+        },
+        required: ['query'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getContactsNeedingFollowUp',
+      description: "Contacts whose follow-up is due within N days. For 'who should I reach out to / follow up with in my network'.",
+      parameters: {
+        type: 'object',
+        properties: {
+          withinDays: { type: 'number', description: 'Days ahead to look, default 7' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'getContactCountsByStatus',
+      description: 'Count networking contacts by outreach stage (to_contact, contacted, responded, referred, closed). For network overviews.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'searchGmail',
       description:
         "Search the user's connected Gmail (read-only) and return sender/recipient/subject/date/snippet. Build gmailQuery with real Gmail operators (from:, to:, subject:, after:YYYY/MM/DD, newer_than:2d, is:sent). If not connected, the tool says so.",
@@ -330,6 +433,9 @@ const TOOL_IMPLEMENTATIONS = {
   getJobsNeedingFollowUp,
   getJobCountsByStatus,
   queryJobApplications,
+  searchContactsByName,
+  getContactsNeedingFollowUp,
+  getContactCountsByStatus,
   searchGmail,
 };
 

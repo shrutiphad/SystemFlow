@@ -55,7 +55,7 @@ export default function ChatDock() {
           </span>
           <div>
             <h2 className="font-display text-sm font-semibold">Assistant</h2>
-            <p className="text-xs text-ink/50 dark:text-ink-dark/50">Tasks, jobs &amp; email</p>
+            <p className="text-xs text-ink/50 dark:text-ink-dark/50">Tasks, jobs, network &amp; email</p>
           </div>
         </div>
         <button
@@ -70,10 +70,10 @@ export default function ChatDock() {
       <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {messages.length === 0 && (
           <div className="text-xs text-ink/50 dark:text-ink-dark/50">
-            <p>Ask about your tasks, applications, or email. Try:</p>
+            <p>Ask about your tasks, applications, network, or email. Try:</p>
             <ul className="mt-2 space-y-1">
               <li>• "Any online assessments this week?"</li>
-              <li>• "When's my follow-up for MayFair?"</li>
+              <li>• "Who's my contact at Stripe?"</li>
               <li>• "What's overdue?"</li>
             </ul>
           </div>
