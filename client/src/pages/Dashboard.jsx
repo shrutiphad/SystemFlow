@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import DashboardStats from '../components/DashboardStats';
 import TaskCard from '../components/TaskCard';
+import FollowUpsWidget from '../components/FollowUpsWidget';
 import { useTaskStore } from '../store/taskStore';
 import { useGmailStore } from '../store/gmailStore';
 import { useAuth } from '../context/AuthContext';
@@ -68,19 +69,23 @@ export default function Dashboard() {
 
       <DashboardStats summary={summary} />
 
-      <section className="mt-8">
-        <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-ink/60 dark:text-ink-dark/60">
-          Up next
-        </h2>
-        <div className="mt-3 space-y-2">
-          {upcoming.length === 0 && (
-            <p className="text-sm text-ink/50 dark:text-ink-dark/50">Nothing pending — you're all caught up.</p>
-          )}
-          {upcoming.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
-      </section>
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        <section>
+          <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-ink/60 dark:text-ink-dark/60">
+            Up next
+          </h2>
+          <div className="mt-3 space-y-2">
+            {upcoming.length === 0 && (
+              <p className="text-sm text-ink/50 dark:text-ink-dark/50">Nothing pending — you're all caught up.</p>
+            )}
+            {upcoming.map((task) => (
+              <TaskCard key={task.id} task={task} />
+            ))}
+          </div>
+        </section>
+
+        <FollowUpsWidget />
+      </div>
     </>
   );
 }
