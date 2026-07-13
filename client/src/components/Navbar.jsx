@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutGrid, ListChecks, Briefcase, Users, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutGrid, ListChecks, Briefcase, Users, BarChart3, Moon, Sun, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import GmailConnect from './GmailConnect';
@@ -40,6 +40,9 @@ export default function Navbar() {
           </NavLink>
           <NavLink to="/network" className={linkClass}>
             <Users size={16} /> Network
+          </NavLink>
+          <NavLink to="/insights" className={linkClass}>
+            <BarChart3 size={16} /> Insights
           </NavLink>
         </nav>
       </div>
