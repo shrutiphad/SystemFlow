@@ -54,7 +54,7 @@ export default function Login() {
         </p>
 
         <p className="mt-4 rounded-lg bg-canvas p-2.5 text-center text-xs text-ink/50 dark:bg-canvas-dark dark:text-ink-dark/50 font-mono">
-          Demo: demo@systemflow.dev / Demo1234
+          Demo: shrutiphadwork@gmail.com / mmmm0000
         </p>
       </div>
     </div>
