@@ -6,7 +6,9 @@
       "Bash(break)",
       "Bash(git add *)",
       "mcp__claude_ai_Vercel__list_teams",
-      "Bash(curl -s \"https://api.github.com/repos/shrutiphad/SystemFlow/actions/runs/29123269399/jobs\")"
+      "Bash(curl -s \"https://api.github.com/repos/shrutiphad/SystemFlow/actions/runs/29123269399/jobs\")",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Read(//tmp/**)"
     ]
   }
 }
