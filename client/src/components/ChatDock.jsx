@@ -71,11 +71,7 @@ export default function ChatDock() {
         {messages.length === 0 && (
           <div className="text-xs text-ink/50 dark:text-ink-dark/50">
             <p>Ask about your tasks, applications, network, or email. Try:</p>
-            <ul className="mt-2 space-y-1">
-              <li>• "Any online assessments this week?"</li>
-              <li>• "Who's my contact at Stripe?"</li>
-              <li>• "What's overdue?"</li>
-            </ul>
+            
           </div>
         )}
         {messages.map((m, i) => (

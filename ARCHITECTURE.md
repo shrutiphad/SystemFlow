@@ -13,7 +13,7 @@ Routes only wire URLs to validation rules and controllers. Controllers hold busi
 **Frontend** separates:
 - `api/` — the only place that knows about HTTP/axios
 - `context/` — long-lived, rarely-changing global state (who's logged in, light/dark theme)
-- `store/` — Zustand store for tasks, which changes on every filter/sort/CRUD action
+- `store/` — Zustand stores (tasks, jobs, contacts, chat, gmail) for server data that changes on every filter/sort/CRUD action
 - `components/` — presentational + some local state, no direct API calls
 - `pages/` — compose components + store into a screen, own the routing-level logic
 
@@ -36,7 +36,39 @@ tasks
   due_date      DATE, nullable
   user_id       UUID FK → users.id, ON DELETE CASCADE
   created_at / updated_at
+
+job_applications
+  id            UUID PK
+  company_name  VARCHAR(150)
+  role_title    VARCHAR(150), nullable
+  portal        VARCHAR(60),  nullable        -- free-text (open set) → STRING, not ENUM
+  source        VARCHAR(60),  nullable        -- fixed analytics buckets → STRING + isIn
+  status        ENUM(wishlist, applied, oa, interviewing, offer, rejected, withdrawn)
+  excitement    INTEGER 1–5,  nullable
+  applied_date / next_follow_up  DATE, nullable
+  user_id       UUID FK → users.id, ON DELETE CASCADE
+  indexes: (user_id), (status), (next_follow_up), (user_id, status)
+
+contacts                                       -- networking CRM
+  id            UUID PK
+  name          VARCHAR(120)
+  company_name / role_title / email / phone / linkedin_url  nullable
+  relationship  VARCHAR(40),  nullable         -- open-ish set → STRING + isIn
+  status        ENUM(to_contact, contacted, responded, referred, closed)
+  last_contacted / next_follow_up  DATE, nullable
+  user_id       UUID FK → users.id, ON DELETE CASCADE
+  job_id        UUID FK → job_applications.id, ON DELETE SET NULL   -- optional link; a person outlives a deleted application
+  indexes: (user_id), (status), (next_follow_up), (user_id, status)
+
+gmail_connections                              -- one per user
+  id            UUID PK
+  email_address VARCHAR, nullable
+  access_token_enc / refresh_token_enc   TEXT   -- AES-256-GCM encrypted, never plaintext
+  token_expiry  TIMESTAMP, nullable
+  user_id       UUID FK → users.id, ON DELETE CASCADE, unique
 ```
+
+**Child-record ownership:** a `contact.job_id` is the one cross-entity link. Because ownership must never come from the request body, the contact controller re-verifies the referenced job belongs to `req.user.id` before attaching — user A can't link a contact to user B's application. The FK is `SET NULL` (not `CASCADE`) because a contact is a person, not a detail of one application.
 
 **Indexing decisions:** every task query in this app is scoped to `user_id` (a user only ever sees their own tasks), so `user_id` is indexed on its own, and again as the lead column in a composite index `(user_id, status, due_date)` — that composite covers the single most common query shape: "my tasks, optionally filtered by status, sorted by due date." `status`, `priority`, and `due_date` also each get their own index since they're independently filterable/sortable. `email` is uniquely indexed since login is a lookup by email.
 
@@ -59,7 +91,7 @@ Storing the JWT in `localStorage` is simpler to wire up across two different ori
 
 Filtering and sorting happen entirely server-side via query params (`?status=&priority=&sortBy=&order=`) rather than client-side array filtering, so the behavior stays correct as task lists grow — the client never has to download tasks it isn't going to show. `sortBy` is restricted to an allow-list (`due_date`, `created_at`) rather than passed straight into the `ORDER BY` clause, to avoid arbitrary column injection.
 
-The dashboard summary (`/dashboard/summary`) is one aggregation query using `COUNT`/`GROUP BY` in Postgres rather than fetching all tasks and counting them in JavaScript — this keeps the payload small and the counts accurate even if the task list itself is paginated in the future.
+The dashboard summary (`/dashboard/summary`) is one aggregation query using `COUNT`/`GROUP BY` in Postgres rather than fetching all tasks and counting them in JavaScript — this keeps the payload small and the counts accurate even if the task list itself is paginated in the future. The same rule governs the two later analytics endpoints: `/insights` (funnel, source split, task/contact counts, and applications-per-month via `date_trunc`) and `/dashboard/agenda` (job + contact follow-ups due within N days, filtered and sorted in SQL and capped) — both aggregate/filter in the database and return only the rows the UI renders.
 
 ## 5. Validation strategy
 

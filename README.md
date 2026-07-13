@@ -1,6 +1,6 @@
 # SystemFlow — AI-Native Task, Job-Hunt & Email Assistant
 
-A full-stack productivity platform that unifies **task management**, a **job-application tracker**, and an **AI assistant** that answers natural-language questions across your tasks, job pipeline, and connected Gmail inbox. Built as a cleanly separated React + Express + PostgreSQL application, extended in three additive phases without modifying the tested core.
+A full-stack productivity platform that unifies **task management**, a **job-application tracker**, a **networking CRM**, an **analytics dashboard**, and an **AI assistant** that answers natural-language questions across your tasks, job pipeline, network, and connected Gmail inbox. Built as a cleanly separated React + Express + PostgreSQL application, extended in additive phases without modifying the tested core.
 
 **Live demo:** `<FILL IN: https://your-frontend.vercel.app>`
 **Demo login:** `demo@systemflow.dev` / `<FILL IN: demo password>`
@@ -29,7 +29,7 @@ The defining idea: a language model sits over your data, but **never gets raw da
 | Layer | Choice | Why |
 |---|---|---|
 | Frontend | React 18 + Vite | Fast dev/build; explicit client/backend boundary |
-| State | React Context (auth, theme) + Zustand (tasks, jobs, chat, gmail) | Context for rarely-changing global state; Zustand stores for data that updates frequently |
+| State | React Context (auth, theme) + Zustand (tasks, jobs, contacts, chat, gmail) | Context for rarely-changing global state; Zustand stores for data that updates frequently |
 | Styling | Tailwind CSS | Utility-first design system with dark mode |
 | Forms / validation | React Hook Form + Zod | Client-side validation mirroring server rules |
 | Backend | Node.js + Express | REST API with middleware-based auth, validation, error handling |
@@ -48,12 +48,12 @@ The defining idea: a language model sits over your data, but **never gets raw da
 - Full task CRUD: title, description, priority (Low/Medium/High), due date, status (To Do / In Progress / Done)
 - Filter by status/priority, sort by due date or creation date
 - Delete with confirmation
-- Dashboard: total tasks, breakdown by status, overdue count (aggregated in the DB)
+- Dashboard: total tasks, breakdown by status, overdue count (aggregated in the DB), plus a **"Follow-ups this week"** agenda surfacing applications and contacts due for a nudge
 - Colour-coded priorities, responsive layout, dark mode
 
 ### Phase 1 — AI assistant (chat sidebar)
-- A floating assistant that answers questions about your own tasks and jobs in natural language
-- The LLM never touches the database — it selects from fixed, named **tools** (search by company, get overdue/upcoming, counts by status, follow-ups, etc.); the backend runs the real, per-user-scoped query
+- A docked assistant that answers questions about your own tasks, jobs, and network in natural language
+- The LLM never touches the database — it selects from fixed, named **tools** (search by company, get overdue/upcoming, counts by status, follow-ups, contact lookup, etc.); the backend runs the real, per-user-scoped query
 - User identity is injected server-side from the auth token — never exposed to the model, so it cannot request another user's data
 
 ### Phase 2 — Job-hunt tracker (Kanban)
@@ -66,6 +66,15 @@ The defining idea: a language model sits over your data, but **never gets raw da
 - Connect a Gmail account (**read-only** scope) from the sidebar
 - Ask the assistant about your actual inbox — which companies you emailed, whether you've had replies — via a live Gmail search the LLM constructs using Gmail's own operators
 - OAuth tokens are **encrypted at rest** (AES-256-GCM); only metadata + snippets are read, never full bodies stored
+
+### Phase 4 — Network (job-hunt CRM)
+- Track the people behind the pipeline: recruiters, referrers, hiring managers, alumni — name, company, role, email, LinkedIn, relationship, outreach status, and follow-up dates
+- A contact can be **linked to a job application**; the backend verifies the parent job belongs to the same user before attaching (child-record ownership rule)
+- Status filter + debounced search; assistant tools answer "who's my contact at Stripe?" and "who should I follow up with?"
+
+### Phase 5 — Insights (analytics)
+- A dashboard of **hand-rolled SVG/CSS charts** (no chart library): application funnel by stage, applications-over-time trend, source breakdown, and task/network status splits
+- Headline metrics — response rate, active pipeline, offers — all computed via SQL `COUNT`/`GROUP BY`, never by counting rows in JS
 
 ---
 
@@ -85,17 +94,17 @@ The defining idea: a language model sits over your data, but **never gets raw da
 systemflow/
 ├── client/                     # React + Vite frontend
 │   └── src/
-│       ├── api/                 # axios (JWT interceptors) + auth/task/job/chat/gmail wrappers
+│       ├── api/                 # axios (JWT interceptors) + auth/task/job/contact/insights/dashboard/chat/gmail wrappers
 │       ├── context/             # AuthContext, ThemeContext
-│       ├── store/               # taskStore, jobStore, chatStore, gmailStore (Zustand)
-│       ├── components/          # Navbar, TaskCard, JobCard, ChatSidebar, GmailConnect, modals, etc.
-│       └── pages/               # Login, Register, Dashboard, Tasks, JobHunt
+│       ├── store/               # taskStore, jobStore, contactStore, chatStore, gmailStore (Zustand)
+│       ├── components/          # Navbar, TaskCard, JobCard, ContactCard, ChatDock, GmailConnect, BarBreakdown, TrendArea, FollowUpsWidget, modals, etc.
+│       └── pages/               # Login, Register, Dashboard, Tasks, JobHunt, Network, Insights
 ├── server/                      # Express + PostgreSQL backend
 │   ├── src/
 │   │   ├── config/               # Sequelize connection
-│   │   ├── models/               # User, Task, JobApplication, GmailConnection
+│   │   ├── models/               # User, Task, JobApplication, Contact, GmailConnection
 │   │   ├── middleware/           # auth, validation, centralized error handling
-│   │   ├── controllers/          # auth, task, dashboard, chat, jobApplication, gmail
+│   │   ├── controllers/          # auth, task, dashboard, chat, jobApplication, contact, insights, gmail
 │   │   ├── routes/
 │   │   ├── services/             # groq.client, chatTools, gmail.client
 │   │   └── utils/                # jwt, asyncHandler, crypto (AES-256-GCM)
@@ -188,6 +197,7 @@ All routes prefixed with `/api`. Protected routes require `Authorization: Bearer
 | PUT | `/tasks/:id` | yes | update (partial) |
 | DELETE | `/tasks/:id` | yes | delete |
 | GET | `/dashboard/summary` | yes | `{ total, byStatus, overdue }` |
+| GET | `/dashboard/agenda?withinDays=` | yes | job + contact follow-ups due within N days (default 7) |
 
 ### Jobs
 | Method | Route | Auth | Notes |
@@ -198,6 +208,20 @@ All routes prefixed with `/api`. Protected routes require `Authorization: Bearer
 | PUT | `/jobs/:id` | yes | update |
 | PATCH | `/jobs/:id/status` | yes | lightweight status change (Kanban drag) |
 | DELETE | `/jobs/:id` | yes | delete |
+
+### Contacts (Network)
+| Method | Route | Auth | Notes |
+|---|---|---|---|
+| GET | `/contacts?status=&job_id=&search=` | yes | filter by status/linked job, search name or company |
+| GET | `/contacts/:id` | yes | single contact (with its linked job) |
+| POST | `/contacts` | yes | create; a `job_id` must reference the caller's own application |
+| PUT | `/contacts/:id` | yes | update |
+| DELETE | `/contacts/:id` | yes | delete |
+
+### Insights
+| Method | Route | Auth | Notes |
+|---|---|---|---|
+| GET | `/insights` | yes | SQL-aggregated funnel, source split, task/contact counts, applications-per-month, and headline totals |
 
 ### Assistant (chat)
 | Method | Route | Auth | Notes |
@@ -218,10 +242,11 @@ All routes prefixed with `/api`. Protected routes require `Authorization: Bearer
 
 ## 9. Database design
 
-Four tables, all user-scoped with `ON DELETE CASCADE`:
+Five tables, all user-scoped with `ON DELETE CASCADE` on `user_id`:
 - **users** — bcrypt-hashed passwords, unique-indexed email
 - **tasks** — UUID PK, ENUM priority/status, `DATE` due date, composite index `(user_id, status, due_date)`
 - **job_applications** — sibling of tasks; ENUM pipeline `status`, free-text `portal`, excitement rating, follow-up dates
+- **contacts** — networking CRM; ENUM outreach `status`, `STRING+isIn` relationship, follow-up dates, and a **nullable `job_id`** linking to a job application (`ON DELETE SET NULL`, so a person outlives a deleted application)
 - **gmail_connections** — one per user; **encrypted** OAuth tokens (never plaintext), unique-indexed on `user_id`
 
 Full rationale (schema, auth flow, LLM tool-calling safety, trade-offs) is in `ARCHITECTURE.md`.
@@ -234,7 +259,7 @@ Full rationale (schema, auth flow, LLM tool-calling safety, trade-offs) is in `A
 cd server && npm test        # backend: Jest + Supertest vs real PostgreSQL
 cd client && npm test        # frontend: Vitest + Testing Library (rendered, vs live backend)
 ```
-Integration tests run against a **real database**, not mocks. They cover auth, task and job CRUD, filtering, dashboard aggregation, and — critically — **ownership isolation** across every entity (proving one user cannot access another's tasks, jobs, or chat results). The frontend tests render the actual app and drive it with real interactions, including the chat tool-calling loop and the Gmail not-connected path.
+Integration tests run against a **real database**, not mocks. They cover auth, task/job/contact CRUD, filtering, dashboard + insights aggregation, the follow-up agenda, the chat contact tools, and — critically — **ownership isolation** across every entity (proving one user cannot access another's tasks, jobs, contacts, insights, or chat results), including the child-record rule that a contact can't link to another user's application. The frontend tests render the actual app and drive it with real interactions, including the chat tool-calling loop and the Gmail not-connected path.
 
 ---
 
